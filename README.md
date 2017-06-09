@@ -1,11 +1,136 @@
+github: [terrencewei/ResponsiveMultiLevelMenu](https://github.com/terrencewei/ResponsiveMultiLevelMenu)
 
-ResponsiveMultiLevelMenu
-=========
+fork from [codrops/ResponsiveMultiLevelMenu](https://github.com/codrops/ResponsiveMultiLevelMenu)
 
-A responsive multi-level menu that shows its submenus in their own context, allowing for a space-saving presentation and usage.
+my custom code for ResponsiveMultiLevelMenu:
 
-[article on Codrops](http://tympanus.net/codrops/?p=14753)
+* base html structure:
+```
+<div id="dl-menu" class="dl-menuwrapper">
+   <button class="dl-trigger">Open Menu</button>
+   <ul class="dl-menu">
+        <li>
+           <a href="#"><span>level 1</span><i class="fa"></i></a>
+           <ul class="dl-submenu">
+               <li class="dl-back">
+                    <a href="#"><i class="fa"></i><span>go back</span></a>
+               </li>
+               <li>
+                   <a href="#">level 2</a>
+                   <ul class="dl-submenu">
+                       <li class="dl-back">
+                            <a href="#"><i class="fa"></i><span>go back</span></a>
+                       </li>
+                       <li>
+                           <a href="#">level 3</a>
+                       </li>
+                   </ul>
+               </li>
+           </ul>
+        </li>
+   </ul>
+</div>
+```
 
-[demo](http://tympanus.net/Development/ResponsiveMultiLevelMenu)
+* ResponsiveMultiLevelMenu/css/component.css
 
-Licensed under the MIT License
+update the font path, from `../fonts` to `/fonts`
+```
+@font-face {
+	font-family: 'icomoon';
+	src:url('/fonts/icomoon.eot');
+	src:url('/fonts/icomoon.eot?#iefix') format('embedded-opentype'),
+		url('/fonts/icomoon.woff') format('woff'),
+		url('/fonts/icomoon.ttf') format('truetype'),
+		url('/fonts/icomoon.svg#icomoon') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+```
+* ResponsiveMultiLevelMenu/js/jquery.dlmenu.js
+
+add new options:
+```
+$.DLMenu.defaults = {
+    ...
+    // user click go back link, redirect instead go to back menu
+    gobackRedirect: false,
+    // user click menu title, redirect instead go to sub menu
+    menuRedirect: true,
+    // user click menu empty area is the same as click menu text
+    clickMenuEmptyAreaAsText: false
+    ...
+}
+```
+add new functions to support new options:
+```
+$.DLMenu.prototype = {
+    ...
+    _checkRedirect: function (isRedirect, event) {
+    
+    var self = this;
+    
+    if (isRedirect) {
+        if (!self.options.clickMenuEmptyAreaAsText) {
+            // if clickMenuEmptyAreaAsText is false, need check if user click the menu text or menu empty area
+            if ($(event.target).is("span")) {
+                // if event.target is <span>, means user click the menu text
+                isRedirect = true;
+            } else {
+                // if event.target is not <span>, means user click the menu empty area, not the menu text
+                isRedirect = false;
+            }
+        }
+    }
+    if (isRedirect) {
+        if ($(event.target).attr("href") && ($(event.target).attr("href") == '#' || $(event.target).attr("href") == 'javascript:void(0)')) {
+            isRedirect = false;
+        }
+    }
+    return isRedirect;
+    },
+    _isRedirect : function (event) {
+    
+    var self = this;
+    
+    var isRedirect = true;
+    if (!self.options.menuRedirect || (self.options.menuRedirect && $(event.target).is("i"))) {
+        // if menuRedirect is false, means click menu do not redirect
+        // if menuRedirect is true but user click the <i> tag arrow icon, do not redirect
+        isRedirect = false;
+    }
+    return self._checkRedirect(isRedirect, event);
+    },
+    _isGobackRedirect : function (event) {
+    
+    var self = this;
+    
+    var isRedirect = true;
+    if (!self.options.gobackRedirect) {
+        isRedirect = false;
+    }
+    return self._checkRedirect(isRedirect, event);
+    },
+    ...
+}
+```
+add new check logic when user click sub menu and go back menu with new functions:
+```
+this.$menuitems.on( 'click.dlmenu', function( event ) {
+    ...
+    if (self._isRedirect(event)) {
+        return;
+    }
+    ...
+}):
+
+
+
+this.$back.on( 'click.dlmenu', function( event ) {
+    ...
+    if (self._isGobackRedirect(event)) {
+        return;
+    }
+    ...
+}):
+```
