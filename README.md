@@ -189,7 +189,8 @@ $.DLMenu.prototype = {
         }
     }
     if (isRedirect) {
-        if ($(event.target).attr("href") && ($(event.target).attr("href") == '#' || $(event.target).attr("href") == 'javascript:void(0)')) {
+        var href = $(event.target).attr("href") || $(event.target).parent().attr("href") || "";
+        if ($.isEmptyObject(href) || href == '#' || href == 'javascript:void(0)') {
             isRedirect = false;
         }
     }
